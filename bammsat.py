@@ -4,7 +4,7 @@ import time
 serialport = serial.Serial("/dev/ttyS0", 115200, timeout=0.5)
 
 while(True):
-	degrees = 24.3 
+	degrees = 24.3
 	pascals = 101035
 	hectopascals = pascals / 100
 	humidity = 10
