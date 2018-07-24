@@ -4,6 +4,7 @@ import time
 import struct
 serialport = serial.Serial("/dev/ttyS0", 115200, timeout=0.5)
 
+
 class Subsystem(object):
     def __init__(self):
         pass
@@ -32,10 +33,16 @@ class EPS(Subsystem):
 
     def process_inbound_packet(self, packet_data):
 	# decode packet
+	unpacked_packet = {}
 	packet = bytearray()
-	packet.extend(packet_data)
-	for item in packet:
-		print str(item)
+	if len(packet_data)==20:
+		packet.extend(packet_data)
+		unpacked_packet["subsystem_id"]=packet[0]
+		unpacked_packet["type"] = packet[1]
+		unpacked_packet["priority"] = packet[2]
+		unpacked_packet["reserved"] = packet[3]
+		unpacked_packet["data"] = packet[4:20].decode("ascii")
+		print unpacked_packet
 	#log_inbound_packet(packet_data)
 
 
