@@ -26,6 +26,7 @@ class COM(object):
 
     def process_inbound_packet(self, packet_data):
         # decode packet
+        print "Received data"
 	unpacked_packet = {}
 	packet = bytearray()
 	if len(packet_data)==20:
