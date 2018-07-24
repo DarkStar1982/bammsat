@@ -22,12 +22,18 @@ class COM(object):
         pass
 
     def send_outbound_packet(self):
-        return None
+	values = [0.0, 0.0, 0.0, 0.0]
+        pack = bytearray()
+        pack.extend(b'\x04\x01')
+        pack.extend(b'\x01\x01')
+        for value in values:
+            ba = bytearray(struct.pack("f", value)) 
+            pack.extend(ba)
+        log_outbound_packet(pack)
+        return pack
 
     def process_inbound_packet(self, packet_data):
         # decode packet
-        print "Received data"
-        print packet_data
 	unpacked_packet = {}
 	packet = bytearray()
 	if len(packet_data)==20:
@@ -83,11 +89,11 @@ def simulate_subsystem(data):
     while(True):
         #generate outbound data
 	p_outbound = subsystem.send_outbound_packet()
-        if p_outbound is not None:	
+	if p_outbound is not None:
             #exchange communications packets
             serialport.write(p_outbound)
 	p_inbound = serialport.readline()
-        
+        print len(p_inbound) 
         #process inbound data
         subsystem.process_inbound_packet(p_inbound)
 	time.sleep(data["packet_delay"]);
@@ -101,7 +107,7 @@ def load_eps_scenario():
 
 def load_com_scenario():
     scenario_data = {
-        "packet_delay": 11,
+        "packet_delay": 9,
         "subsystem": "com"
     }
     return scenario_data
