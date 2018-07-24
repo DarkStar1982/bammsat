@@ -22,7 +22,7 @@ class EPS(Subsystem):
     def send_outbound_packet(self):
         packet = b"\x41\x42\x43\x45\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54"
         eps_packet = [122,123,221,231,198,223]
-        values = [5.1, 100.0, 12.2, 12.3]
+        values = [5.1, 4.98, 12.2, 12.3]
         pack = bytearray()
         pack.extend(b'\x01\x01')
         pack.extend(b'\x01\x01')
