@@ -68,7 +68,7 @@ class EPS(Subsystem):
 
     def evolve(self):
         self.counter = self.counter + 1
-        if self.state =="nominal":
+        if self.state == "nominal":
             # make voltage levels hover slightly above 5.0/12.0v
             offset = 0.2*random()-0.1*random()
             bus_5v = 5.0 + offset
@@ -77,7 +77,15 @@ class EPS(Subsystem):
             battery_3v = 3.7 + offset
             self.voltages = [bus_5v, bus_3v, solar_12v, battery_3v]
             # evolve the battery cycle, solar panel power etc
-            # check counter value
+            # check counter value - change solar panel voltages
+        if self.state == "tumbling":
+            pass # no stable power
+        if self.state == "solar_panel_failure":
+            pass
+        if self.state == "bus_short":
+            pass
+        if self.state == "battery_failure"
+            pass
 
 
 #simulate communication subsysem
