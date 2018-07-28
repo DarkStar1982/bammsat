@@ -24,20 +24,34 @@ class Subsystem(object):
         pass
 
 # simulate power subsystem
+# can be fully passive, self-managed with only health reporting
 class EPS(Subsystem):
     def __init__(self, scenario_data):
         self.state = scenario_data["state"]
+        self.counter = 0 # number of time intervvales
         if self.state=="nominal":
-            self.voltages = [5.0,5.0,12.0,12.0]
+            self.voltages = [5.0,3.3,12.0,3.7] # bus voltages, solar panel, battery
+            self.sensors = [0.0,0.0,0.0,0.0] # solar panel current, temperatures, battery wear
 
     def get_next_packet(self):
-        pack = bytearray()
-        pack.extend(b'\x01\x01')
-        pack.extend(b'\x01\x01')
-        for value in self.voltages:
-            ba = bytearray(struct.pack("f", value))
-            pack.extend(ba)
-        return pack
+        # decide what packet to send
+        if self.counter % 2 = 0:
+            pack = bytearray()
+            pack.extend(b'\x01\x01') # packet type 1
+            pack.extend(b'\x01\x01')
+            for value in self.voltages:
+                ba = bytearray(struct.pack("f", value))
+                pack.extend(ba)
+            return pack
+        else:
+            pack = bytearray()
+            pack.extend(b'\x01\x02') # packet type 2
+            pack.extend(b'\x01\x01')
+            for value in self.sensors:
+                ba = bytearray(struct.pack("f", value))
+                pack.extend(ba)
+            return pack
+
 
     def process_inbound_packet(self, packet_data):
         # decode packet
@@ -53,12 +67,18 @@ class EPS(Subsystem):
             print unpacked_packet
 
     def evolve(self):
+        self.counter = self.counter + 1
         if self.state =="nominal":
             # make voltage levels hover slightly above 5.0/12.0v
             offset = 0.2*random()-0.1*random()
-            value_5v = 5.0 + offset
-            value_12v = 12.0 + offset
-            self.voltages = [value_5v, value_5v+0.01*random(), value_12v, value_12v+0.01*random()]
+            bus_5v = 5.0 + offset
+            bus_3v = 3.3 + offset
+            solar_12v = 12.0 + offset
+            battery_3v = 3.7 + offset
+            self.voltages = [bus_5v, bus_3v, solar_12v, battery_3v]
+            # evolve the battery cycle, solar panel power etc
+            # check counter value
+
 
 #simulate communication subsysem
 class COM(object):
@@ -118,7 +138,6 @@ class PLD(Subsystem):
             unpacked_packet["reserved"] = packet[3]
             unpacked_packet["data"] = packet[4:20].decode("ascii")
             print unpacked_packet
-        # log_inbound_packet(packet_data)
 
 def create_subsystem(data):
     subsystem = None
@@ -133,21 +152,21 @@ def create_subsystem(data):
 def simulate_subsystem(data):
     subsystem = create_subsystem(data)
     while(True):
-        #generate outbound data
-	p_outbound = subsystem.get_next_packet()
-	if p_outbound is not None:
+        # generate outbound data
+        p_outbound = subsystem.get_next_packet()
+        if p_outbound is not None:
             #exchange communications packets
             serialport.write(p_outbound)
-	p_inbound = serialport.readline()
+        p_inbound = serialport.readline()
         print p_inbound
         # process inbound data
         subsystem.process_inbound_packet(p_inbound)
-	subsystem.evolve()
-        time.sleep(data["packet_delay"]);
+        subsystem.evolve()
+        time.sleep(data["packet_delay"]); # time slice
 
 def load_eps_scenario():
     scenario_data = {
-        "packet_delay": 11,
+        "packet_delay": 10,
         "subsystem": "eps",
         "state": "nominal"
     }
