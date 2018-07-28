@@ -86,6 +86,8 @@ class EPS(Subsystem):
             pass
         if self.state == "battery_failure"
             pass
+        if self.state == "sensor_failure" # take that, OBC!
+            pass
 
 
 #simulate communication subsysem
