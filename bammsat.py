@@ -23,63 +23,34 @@ class Subsystem(object):
     def evolve(self):
         pass
 
-#simulate communication subsysem
-class COM(object):
-    def __init__(self):
-        pass
-
-    def send_outbound_packet(self):
-	values = [0.0, 0.0, 0.0, 0.0]
-        pack = bytearray()
-        pack.extend(b'\x04\x01')
-        pack.extend(b'\x01\x01')
-        for value in values:
-            ba = bytearray(struct.pack("f", value)) 
-            pack.extend(ba)
-        log_outbound_packet(pack)
-        return pack
-
-    def process_inbound_packet(self, packet_data):
-        # decode packet
-	unpacked_packet = {}
-	packet = bytearray()
-	if len(packet_data)==20:
-	    packet.extend(packet_data)
-	    unpacked_packet["subsystem_id"]=packet[0]
-	    unpacked_packet["type"] = packet[1]
-	    unpacked_packet["priority"] = packet[2]
-	    unpacked_packet["reserved"] = packet[3]
-	    unpacked_packet["data"] = packet[4:20].decode("ascii")
-	    print unpacked_packet
-
 # simulate power subsystem
 class EPS(Subsystem):
     def __init__(self, scenario_data):
         self.state = scenario_data["state"]
         if self.state=="nominal":
             self.voltages = [5.0,5.0,12.0,12.0]
-    
+
     def get_next_packet(self):
         pack = bytearray()
         pack.extend(b'\x01\x01')
         pack.extend(b'\x01\x01')
         for value in self.voltages:
-            ba = bytearray(struct.pack("f", value)) 
+            ba = bytearray(struct.pack("f", value))
             pack.extend(ba)
         return pack
 
     def process_inbound_packet(self, packet_data):
-	# decode packet
-	unpacked_packet = {}
-	packet = bytearray()
-	if len(packet_data)==20:
-	    packet.extend(packet_data)
-	    unpacked_packet["subsystem_id"]=packet[0]
-	    unpacked_packet["type"] = packet[1]
-	    unpacked_packet["priority"] = packet[2]
-	    unpacked_packet["reserved"] = packet[3]
-	    unpacked_packet["data"] = packet[4:20].decode("ascii")
-	    print unpacked_packet
+        # decode packet
+        unpacked_packet = {}
+        packet = bytearray()
+        if len(packet_data)==20:
+            packet.extend(packet_data)
+            unpacked_packet["subsystem_id"]=packet[0]
+            unpacked_packet["type"] = packet[1]
+            unpacked_packet["priority"] = packet[2]
+            unpacked_packet["reserved"] = packet[3]
+            unpacked_packet["data"] = packet[4:20].decode("ascii")
+            print unpacked_packet
 
     def evolve(self):
         if self.state =="nominal":
@@ -87,37 +58,67 @@ class EPS(Subsystem):
             offset = 0.2*random()-0.1*random()
             value_5v = 5.0 + offset
             value_12v = 12.0 + offset
-            self.voltages = [value_5v, value_5v+0.01*random(), value_12v, value_12v+0.01*random()] 
+            self.voltages = [value_5v, value_5v+0.01*random(), value_12v, value_12v+0.01*random()]
+
+#simulate communication subsysem
+class COM(object):
+    def __init__(self):
+        pass
+
+    def send_outbound_packet(self):
+        values = [0.0, 0.0, 0.0, 0.0]
+        pack = bytearray()
+        pack.extend(b'\x04\x01')
+        pack.extend(b'\x01\x01')
+        for value in values:
+            ba = bytearray(struct.pack("f", value))
+            pack.extend(ba)
+        log_outbound_packet(pack)
+        return pack
+
+    def process_inbound_packet(self, packet_data):
+        # decode packet
+        unpacked_packet = {}
+        packet = bytearray()
+        if len(packet_data)==20:
+            packet.extend(packet_data)
+            unpacked_packet["subsystem_id"]=packet[0]
+            unpacked_packet["type"] = packet[1]
+            unpacked_packet["priority"] = packet[2]
+            unpacked_packet["reserved"] = packet[3]
+            unpacked_packet["data"] = packet[4:20].decode("ascii")
+            print unpacked_packet
+
 
 # simulate payload subsystem
 class PLD(Subsystem):
     def __init__(self):
         pass
-    
+
     def send_outbound_packet(self):
         values = [5.1, 4.98, 12.2, 12.3]
         pack = bytearray()
         pack.extend(b'\x03\x01')
         pack.extend(b'\x01\x01')
         for value in values:
-            ba = bytearray(struct.pack("f", value)) 
+            ba = bytearray(struct.pack("f", value))
             pack.extend(ba)
         log_outbound_packet(pack)
         return pack
 
     def process_inbound_packet(self, packet_data):
-	# decode packet
-	unpacked_packet = {}
-	packet = bytearray()
-	if len(packet_data)==20:
-	    packet.extend(packet_data)
-	    unpacked_packet["subsystem_id"]=packet[0]
-	    unpacked_packet["type"] = packet[1]
-	    unpacked_packet["priority"] = packet[2]
-	    unpacked_packet["reserved"] = packet[3]
-	    unpacked_packet["data"] = packet[4:20].decode("ascii")
-	    print unpacked_packet
-	#log_inbound_packet(packet_data)
+        # decode packet
+        unpacked_packet = {}
+        packet = bytearray()
+        if len(packet_data)==20:
+            packet.extend(packet_data)
+            unpacked_packet["subsystem_id"]=packet[0]
+            unpacked_packet["type"] = packet[1]
+            unpacked_packet["priority"] = packet[2]
+            unpacked_packet["reserved"] = packet[3]
+            unpacked_packet["data"] = packet[4:20].decode("ascii")
+            print unpacked_packet
+        # log_inbound_packet(packet_data)
 
 def create_subsystem(data):
     subsystem = None
@@ -127,7 +128,7 @@ def create_subsystem(data):
         subsystem = COM()
     if data["subsystem"] == "pld":
         subsystem = PLD()
-    return subsystem 
+    return subsystem
 
 def simulate_subsystem(data):
     subsystem = create_subsystem(data)
