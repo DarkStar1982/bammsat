@@ -15,7 +15,7 @@ class SerialPortMockup(object):
         return None
 
     def readline(self):
-        return ""
+        return "Test packet"
 
 class Subsystem(object):
     def __init__(self):
@@ -78,6 +78,7 @@ class EPS(Subsystem):
         # decode packet
         unpacked_packet = {}
         packet = bytearray()
+        print packet_data
         if len(packet_data)==20:
             packet.extend(packet_data)
             unpacked_packet["subsystem_id"]=packet[0]
@@ -129,13 +130,13 @@ class COM(object):
             for value in values:
                 ba = bytearray(struct.pack("f", value))
                 pack.extend(ba)
-            log_outbound_packet(pack)
             return pack
         else:
             return None
 
     def process_inbound_packet(self, packet_data):
         # decode packet
+        print packet_data
         unpacked_packet = {}
         packet = bytearray()
         if len(packet_data)==20:
@@ -163,7 +164,6 @@ class PLD(Subsystem):
         for value in values:
             ba = bytearray(struct.pack("f", value))
             pack.extend(ba)
-        log_outbound_packet(pack)
         return pack
 
     def process_inbound_packet(self, packet_data):
@@ -220,7 +220,7 @@ def load_subsystem_scenario(p_subsystem):
             "packet_delay": 10,
             "subsystem": "eps",
             "state": "nominal",
-            "serialmode": "virtual"
+            "serialmode": "real"
         }
     if p_subsystem == "com":
         scenario_data = {
@@ -243,26 +243,30 @@ def load_subsystem_scenario(p_subsystem):
     return scenario_data
 
 def display_help():
-    pass
+    print ('General usage:')
+    print ('\tbammsat.py -s <subsystem>, where <subsystem>')
+    print ('\tcan be one of the following: "eps|com|pld|adc"\n')
+    print ("Helpful tips how to use BammSat software-in-the-loop simulator:")
+    print ("\t1. Read the code, it is pretty self-explanatory")
+    print ("\t2. If -v option is specified, the simulator will not attempt to")
+    print ("\t   create an actual serial port connection, using the mock object instead")
 
 def main(argv):
     scenario_data = None
     try:
-        opts, args = getopt.getopt(argv,"hecpa",["help","eps","com","pld","adc"])
+        opts, args = getopt.getopt(argv,"hvs:",["help","vse","system="])
     except getopt.GetoptError:
-        print ('bammsat.py -help')
+        print ('bammsat.py --help')
         sys.exit(2)
     for opt, arg in opts:
         if opt in ('-h','--help'):
-            print ("Help hints go here")
-        if opt in ('-e','--eps'):
-            scenario_data = load_subsystem_scenario("eps")
-        if opt in ('-c', '--com'):
-            scenario_data = load_subsystem_scenario("com")
-        if opt in ('-p', '--pld'):
-            scenario_data = load_subsystem_scenario("pld")
-        if opt in ('-a', '--adc'):
-            scenario_data = load_subsystem_scenario("adc")
+            display_help()
+            sys.exit(0)
+        elif opt in ('-s','--system'):
+            subsystem = arg
+            scenario_data = load_subsystem_scenario(subsystem)
+        elif opt in ('-v', '--vse'):
+            scenario_data["serialmode"]="virtual"
     BAMMSatSimulator = SubsystemSimulator(scenario_data)
     BAMMSatSimulator.simulate()
 
