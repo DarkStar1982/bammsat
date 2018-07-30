@@ -116,8 +116,10 @@ class EPS(Subsystem):
 
 #simulate communication subsysem
 class COM(object):
-    def __init__(self):
-        pass
+    def __init__(self, scenario_data):
+        self.state = scenario_data["state"]
+        self.time_delay = scenario_data["packet_delay"]
+        self.counter = 0
 
     def get_next_packet(self):
         a = sys.stdin.readline()
@@ -149,7 +151,8 @@ class COM(object):
             print unpacked_packet
 
     def evolve(self):
-        pass
+        time.sleep(self.time_delay)
+        self.counter = self.counter + 1
 
 # simulate payload subsystem
 class PLD(Subsystem):
