@@ -122,20 +122,15 @@ class COM(object):
         self.counter = 0
 
     def get_next_packet(self):
-        a = sys.stdin.readline()
-        # create packet from command input or send the hearbeat packet if no input
-        if a == '\n':
-            values = [0.0, 0.0, 0.0, 0.0]
-            pack = bytearray()
-            pack.extend(b'\x04\x01')
-            pack.extend(b'\x01\x01')
-            for value in values:
-                ba = bytearray(struct.pack("f", value))
-                pack.extend(ba)
-            return pack
-        else:
-            return None
-
+        values = [0.0, 0.0, 0.0, 0.0]
+        pack = bytearray()
+        pack.extend(b'\x04\x01')
+        pack.extend(b'\x01\x01')
+        for value in values:
+            ba = bytearray(struct.pack("f", value))
+            pack.extend(ba)
+        return pack
+    
     def process_inbound_packet(self, packet_data):
         # decode packet
         print packet_data
