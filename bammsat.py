@@ -53,7 +53,7 @@ class EPS(Subsystem):
         self.counter = 0
         if self.state=="nominal":
             self.voltages = [5.0,3.3,12.0,3.7] # bus voltages, solar panel, battery
-            self.sensors = [0.0,0.0,0.0,0.0] # solar panel current, temperatures, battery wear
+            self.sensors = [0.0,0.0,0.0,0.0] # solar panel temperature, EPS & battery temperatures, battery wear
 
     def get_next_packet(self):
         # decide what packet to send
@@ -122,12 +122,12 @@ class COM(object):
         self.counter = 0
 
     def get_next_packet(self):
-        values = [0.0, 0.0, 0.0, 0.0]
+        values = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
         pack = bytearray()
         pack.extend(b'\x04\x01')
         pack.extend(b'\x01\x01')
         for value in values:
-            ba = bytearray(struct.pack("f", value))
+            ba = bytearray(struct.pack("c", value))
             pack.extend(ba)
         return pack
 
