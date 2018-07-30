@@ -224,6 +224,7 @@ def load_subsystem_scenario(p_subsystem):
         scenario_data = {
             "packet_delay": 9,
             "subsystem": "com",
+            "state": "nominal",
             "serialmode": "real"
         }
     if p_subsystem == "pld":
