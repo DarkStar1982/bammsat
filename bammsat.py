@@ -130,7 +130,7 @@ class COM(object):
             ba = bytearray(struct.pack("f", value))
             pack.extend(ba)
         return pack
-    
+
     def process_inbound_packet(self, packet_data):
         # decode packet
         print packet_data
@@ -188,7 +188,7 @@ class SubsystemSimulator(object):
         if data["subsystem"] == "eps":
             self.subsystem = EPS(data)
         if data["subsystem"] == "com":
-            self.subsystem = COM()
+            self.subsystem = COM(data)
         if data["subsystem"] == "pld":
             self.subsystem = PLD()
         if data["subsystem"] == "adc":
