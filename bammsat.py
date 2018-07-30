@@ -127,7 +127,7 @@ class COM(object):
         pack.extend(b'\x04\x01')
         pack.extend(b'\x01\x01')
         for value in values:
-            ba = bytearray(struct.pack("c", value))
+            ba = bytearray(struct.pack("b", value))
             pack.extend(ba)
         return pack
 
