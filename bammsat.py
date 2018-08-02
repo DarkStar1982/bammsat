@@ -151,8 +151,10 @@ class COM(object):
 
 # simulate payload subsystem
 class PLD(Subsystem):
-    def __init__(self):
-        pass
+    def __init__(self, scenario_data):
+        self.state = scenario_data["state"]
+        self.time_delay = scenario_data["packet_delay"]
+        self.counter = 0
 
     def get_next_packet(self):
         values = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
@@ -177,6 +179,10 @@ class PLD(Subsystem):
             unpacked_packet["data"] = packet[4:20].decode("ascii")
             print unpacked_packet
 
+    def evolve(self):
+        time.sleep(self.time_delay)
+        self.counter = self.counter + 1
+
 class SubsystemSimulator(object):
     # create serial port connection, and subsystem to run
     # note that serial port connection can be also a simulated one
@@ -192,7 +198,7 @@ class SubsystemSimulator(object):
         if data["subsystem"] == "com":
             self.subsystem = COM(data)
         if data["subsystem"] == "pld":
-            self.subsystem = PLD()
+            self.subsystem = PLD(data)
         if data["subsystem"] == "adc":
             self.subsystem = ADC()
 
