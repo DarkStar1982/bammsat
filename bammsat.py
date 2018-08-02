@@ -155,12 +155,12 @@ class PLD(Subsystem):
         pass
 
     def get_next_packet(self):
-        values = [5.1, 4.98, 12.2, 12.3]
+        values = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
         pack = bytearray()
         pack.extend(b'\x03\x01')
         pack.extend(b'\x01\x01')
         for value in values:
-            ba = bytearray(struct.pack("f", value))
+            ba = bytearray(struct.pack("b", value))
             pack.extend(ba)
         return pack
 
