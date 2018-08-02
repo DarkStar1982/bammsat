@@ -251,13 +251,13 @@ def display_help():
     print ("\t1. Read the code, it is pretty self-explanatory")
     print ("\t2. If -v option is specified, the simulator will not attempt to")
     print ("\t   create an actual serial port connection, using the mock object instead")
-    print ("\t3. If -p2 option is specified, the simulator will use Raspberry Pi 2")
+    print ("\t3. If -c option is specified, the simulator will use Raspberry Pi 2")
     print ("\t   compatible serial port settings");
 
 def main(argv):
     scenario_data = None
     try:
-        opts, args = getopt.getopt(argv,"hvs:",["help","vse","system="])
+        opts, args = getopt.getopt(argv,"hvcs:",["help","vse","pi2","system="])
     except getopt.GetoptError:
         print ('bammsat.py --help')
         sys.exit(2)
@@ -270,7 +270,7 @@ def main(argv):
             scenario_data = load_subsystem_scenario(subsystem)
         elif opt in ('-v', '--vse'):
             scenario_data["serialmode"]="virtual"
-        elif opt in ('-p2', '--pi2'):
+        elif opt in ('-c', '--pi2'):
             scenario_data["serialmode"]="pi2compatible"
     BAMMSatSimulator = SubsystemSimulator(scenario_data)
     BAMMSatSimulator.simulate()
