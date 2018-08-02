@@ -181,7 +181,9 @@ class SubsystemSimulator(object):
     # create serial port connection, and subsystem to run
     # note that serial port connection can be also a simulated one
     def __init__(self, data):
-        if data["serialmode"] == "real":
+        if data["serialmode"] == "pi2compatible":
+            self.serialport = serial.Serial("/dev/ttyAMA0", 115200, timeout=0.5)
+        elif data["serialmode"] == "real":
             self.serialport = serial.Serial("/dev/ttyS0", 115200, timeout=0.5)
         elif data["serialmode"] == "virtual":
             self.serialport = SerialPortMockup()
@@ -249,6 +251,8 @@ def display_help():
     print ("\t1. Read the code, it is pretty self-explanatory")
     print ("\t2. If -v option is specified, the simulator will not attempt to")
     print ("\t   create an actual serial port connection, using the mock object instead")
+    print ("\t3. If -p2 option is specified, the simulator will use Raspberry Pi 2")
+    print ("\t   compatible serial port settings");
 
 def main(argv):
     scenario_data = None
@@ -266,6 +270,8 @@ def main(argv):
             scenario_data = load_subsystem_scenario(subsystem)
         elif opt in ('-v', '--vse'):
             scenario_data["serialmode"]="virtual"
+        elif opt in ('-p2', '--pi2'):
+            scenario_data["serialmode"]="pi2compatible"
     BAMMSatSimulator = SubsystemSimulator(scenario_data)
     BAMMSatSimulator.simulate()
 
