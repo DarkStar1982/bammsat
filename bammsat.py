@@ -157,7 +157,41 @@ class PLD(Subsystem):
         self.counter = 0
 
     def get_next_packet(self):
-        values = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+        values = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,1]
+        pack = bytearray()
+        pack.extend(b'\x03\x01')
+        pack.extend(b'\x01\x01')
+        for value in values:
+            ba = bytearray(struct.pack("b", value))
+            pack.extend(ba)
+        return pack
+
+    def process_inbound_packet(self, packet_data):
+        # decode packet
+        print packet_data
+        unpacked_packet = {}
+        packet = bytearray()
+        if len(packet_data)==20:
+            packet.extend(packet_data)
+            unpacked_packet["subsystem_id"]=packet[0]
+            unpacked_packet["type"] = packet[1]
+            unpacked_packet["priority"] = packet[2]
+            unpacked_packet["reserved"] = packet[3]
+            unpacked_packet["data"] = packet[4:20].decode("ascii")
+            print unpacked_packet
+
+    def evolve(self):
+        time.sleep(self.time_delay)
+        self.counter = self.counter + 1
+
+class ADC(Subsystem):
+    def __init__(self, scenario_data):
+        self.state = scenario_data["state"]
+        self.time_delay = scenario_data["packet_delay"]
+        self.counter = 0
+
+    def get_next_packet(self):
+        values = [0.3,0.1,0.2,0.1]
         pack = bytearray()
         pack.extend(b'\x03\x01')
         pack.extend(b'\x01\x01')
@@ -200,7 +234,7 @@ class SubsystemSimulator(object):
         if data["subsystem"] == "pld":
             self.subsystem = PLD(data)
         if data["subsystem"] == "adc":
-            self.subsystem = ADC()
+            self.subsystem = ADC(data)
 
     # get outbound data, exchange communications packets
     # process inbound data and move forward the subsystem state
@@ -246,6 +280,7 @@ def load_subsystem_scenario(p_subsystem):
         scenario_data = {
             "packet_delay": 10,
             "subsystem": "adc",
+            "state": "nominal",
             "serialmode": "real"
         }
     return scenario_data
