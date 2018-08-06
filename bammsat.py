@@ -180,22 +180,22 @@ class ADC(Subsystem):
     def get_next_packet(self):
         pack = bytearray()
         if self.counter % 4 == 0:
-            pack.extend(b'\x03\x01')
+            pack.extend(b'\x02\x01')
             # packet type 1 - angular rates in deg/s
             # ax, ay, az - in three axis
             values = [0.1,0.1,-0.2,0.0]
         if self.counter % 4 == 1:
-            pack.extend(b'\x03\x02')
+            pack.extend(b'\x02\x02')
             # packet type 2 - acceleration in g
             # gx, gy, gz - in three axis
             values = [0.1,-0.1,0.2,0.0]
         if self.counter % 4 == 2:
-            pack.extend(b'\x03\x03')
+            pack.extend(b'\x02\x03')
             # packet type 3 - magnetic field strength in gauss
             # mx, my, mz - in three axis
             values = [0.01,-0.1,0.42,0.0]
         if self.counter % 4 == 3:
-            pack.extend(b'\x03\x04')
+            pack.extend(b'\x02\x04')
             # packet type 3 - orientation angles
             # pitch, roll, heading
             values = [121,-23.0,170.4,0.0]
@@ -209,6 +209,7 @@ class ADC(Subsystem):
         # decode packet
         unpacked_packet = {}
         packet = bytearray()
+        print packet_data
         if len(packet_data)==20:
             packet.extend(packet_data)
             unpacked_packet["subsystem_id"]=packet[0]
