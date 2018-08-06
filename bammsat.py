@@ -31,19 +31,6 @@ class Subsystem(object):
         pass
 
 
-class ADC(Subsystem):
-    def __init__(self):
-        pass
-
-    def process_inbound_packet(packet_data):
-        pass
-
-    def get_next_packet(self):
-        return None
-
-    def evolve(self):
-        pass
-
 # simulate power subsystem
 # can be fully passive, self-managed with only health reporting
 class EPS(Subsystem):
@@ -191,12 +178,30 @@ class ADC(Subsystem):
         self.counter = 0
 
     def get_next_packet(self):
-        values = [0.3,0.1,0.2,0.1]
         pack = bytearray()
-        pack.extend(b'\x03\x01')
+        if self.counter % 4 == 0:
+            pack.extend(b'\x03\x01')
+            # packet type 1 - angular rates in deg/s
+            # ax, ay, az - in three axis
+            values = [0.1,0.1,-0.2,0.0]
+        if self.counter % 4 == 1:
+            pack.extend(b'\x03\x02')
+            # packet type 2 - acceleration in g
+            # gx, gy, gz - in three axis
+            values = [0.1,-0.1,0.2,0.0]
+        if self.counter % 4 == 2:
+            pack.extend(b'\x03\x03')
+            # packet type 3 - magnetic field strength in gauss
+            # mx, my, mz - in three axis
+            values = [0.01,-0.1,0.42,0.0]
+        if self.counter % 4 == 3:
+            pack.extend(b'\x03\x04')
+            # packet type 3 - orientation angles
+            # pitch, roll, heading
+            values = [121,-23.0,170.4,0.0]
         pack.extend(b'\x01\x01')
         for value in values:
-            ba = bytearray(struct.pack("b", value))
+            ba = bytearray(struct.pack("f", value))
             pack.extend(ba)
         return pack
 
