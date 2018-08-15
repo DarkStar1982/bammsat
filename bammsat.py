@@ -317,6 +317,8 @@ def display_help():
     print ("\t   create an actual serial port connection, using the mock object instead")
     print ("\t3. If -c option is specified, the simulator will use Raspberry Pi 2")
     print ("\t   compatible serial port settings");
+    print ("\t3. If -u option is specified, the simulator will attempt to use extra")
+    print ("\t   hardware functionality, if available");
 
 def main(argv):
     scenario_data = None
