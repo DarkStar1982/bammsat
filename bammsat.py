@@ -5,7 +5,11 @@ import struct
 import sys
 import getopt
 from random import random
+from Adafruit_BME280 import *
 
+OPTIONS = {
+    "hardware_sensors":False
+}
 
 class SerialPortMockup(object):
     def __init__(self):
@@ -41,6 +45,11 @@ class EPS(Subsystem):
         if self.state=="nominal":
             self.voltages = [5.0,3.3,12.0,3.7] # bus voltages, solar panel, battery
             self.sensors = [0.0,0.0,0.0,0.0] # solar panel temperature, EPS & battery temperatures, battery wear
+        if OPTIONS["hardware_sensors"]:
+            self.sensor = BME280(t_mode=BME280_OSAMPLE_8, p_mode=BME280_OSAMPLE_8, h_mode=BME280_OSAMPLE_8)
+        else:
+            self.sensor = None
+
 
     def get_next_packet(self):
         # decide what packet to send
@@ -89,6 +98,13 @@ class EPS(Subsystem):
             self.voltages = [bus_5v, bus_3v, solar_12v, battery_3v]
             # evolve the battery cycle, solar panel power etc
             # check counter value - change solar panel voltages
+            if OPTIONS["hardware_sensors"]:
+                degrees = self.sensor.read_temperature()
+                # rest of the values might be not that useful
+            	# pascals = self.sensor.read_pressure()
+            	# hectopascals = pascals / 100
+            	# humidity = sensor.read_humidity()
+                self.sensors=[degrees,degrees,degrees,degrees]
         if self.state == "tumbling":
             pass # no stable power
         if self.state == "solar_panel_failure":
@@ -305,7 +321,7 @@ def display_help():
 def main(argv):
     scenario_data = None
     try:
-        opts, args = getopt.getopt(argv,"hvcs:",["help","vse","pi2","system="])
+        opts, args = getopt.getopt(argv,"huvcs:",["help","use_sensors","vse","pi2","system="])
     except getopt.GetoptError:
         print ('bammsat.py --help')
         sys.exit(2)
@@ -316,6 +332,8 @@ def main(argv):
         elif opt in ('-s','--system'):
             subsystem = arg
             scenario_data = load_subsystem_scenario(subsystem)
+        elif opt in ('-u', '--use_sensors'):
+            OPTIONS["hardware_sensors"] = True
         elif opt in ('-v', '--vse'):
             scenario_data["serialmode"]="virtual"
         elif opt in ('-c', '--pi2'):
