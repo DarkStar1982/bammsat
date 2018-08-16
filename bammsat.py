@@ -209,7 +209,7 @@ class ADC(Subsystem):
 
     def get_next_packet(self):
         pack = bytearray()
-        packet_types = ['G':0,'A':1,'M':2,'Y':3]
+        packet_types = {'G':0,'A':1,'M':2,'Y':3}
         if OPTIONS["hardware_sensors"]:
             packet = self.get_hardware_packet()
             values = packet["data"]
