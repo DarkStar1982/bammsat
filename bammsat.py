@@ -215,7 +215,7 @@ class ADC(Subsystem):
             values = packet["data"]
             values.append(0.0) # last field unused
             type = packet_types[packet_data["type"]]
-        else
+        else:
             type = self.counter % 4
             values = [0.1,0.1,-0.2,0.0]
         if type == 0:
