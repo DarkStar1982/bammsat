@@ -214,7 +214,7 @@ class ADC(Subsystem):
             packet = self.get_hardware_packet()
             values = packet["data"]
             values.append(0.0) # last field unused
-            type = packet_types[packet_data["type"]]
+            type = packet_types[packet["type"]]
         else:
             type = self.counter % 4
             values = [0.1,0.1,-0.2,0.0]
