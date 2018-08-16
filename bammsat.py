@@ -192,29 +192,48 @@ class ADC(Subsystem):
         self.state = scenario_data["state"]
         self.time_delay = scenario_data["packet_delay"]
         self.counter = 0
+        if OPTIONS["hardware_sensors"]:
+            # connect to hardware IMU
+            #change ACM number as found from ls /dev/tty/ACM
+            self.adc_channel=serial.Serial("/dev/ttyACM0",115200)
+            self.adc_channel.baudrate=115200
+
+    def get_hardware_packet(self):
+        read_ser=self.adc_channel.readline()
+        clean = read_ser.replace(' ','').replace('\r\n','')
+        parsed = clean[2:].split(',')
+        packet_data = {
+                "type": read_ser[0],
+                "data": [float(x) for x in parsed]}
+        return packet_data
 
     def get_next_packet(self):
         pack = bytearray()
-        if self.counter % 4 == 0:
-            pack.extend(b'\x02\x01')
+        packet_types = ['G':0,'A':1,'M':2,'Y':3]
+        if OPTIONS["hardware_sensors"]:
+            packet = self.get_hardware_packet()
+            values = packet["data"]
+            values.append(0.0) # last field unused
+            type = packet_types[packet_data["type"]]
+        else
+            type = self.counter % 4
+            values = [0.1,0.1,-0.2,0.0]
+        if type == 0:
             # packet type 1 - angular rates in deg/s
             # ax, ay, az - in three axis
-            values = [0.1,0.1,-0.2,0.0]
-        if self.counter % 4 == 1:
-            pack.extend(b'\x02\x02')
+            pack.extend(b'\x02\x01')
+        if type == 1:
             # packet type 2 - acceleration in g
             # gx, gy, gz - in three axis
-            values = [0.1,-0.1,0.2,0.0]
-        if self.counter % 4 == 2:
-            pack.extend(b'\x02\x03')
+            pack.extend(b'\x02\x02')
+        if type == 2:
             # packet type 3 - magnetic field strength in gauss
             # mx, my, mz - in three axis
-            values = [0.01,-0.1,0.42,0.0]
-        if self.counter % 4 == 3:
-            pack.extend(b'\x02\x04')
+            pack.extend(b'\x02\x03')
+        if type == 3:
             # packet type 3 - orientation angles
             # pitch, roll, heading
-            values = [121,-23.0,170.4,0.0]
+            pack.extend(b'\x02\x04')
         pack.extend(b'\x01\x01')
         for value in values:
             ba = bytearray(struct.pack("f", value))
