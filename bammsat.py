@@ -374,7 +374,7 @@ def display_help():
     print ('General usage:')
     print ('\tbammsat.py -s <subsystem>, where <subsystem>')
     print ('\tcan be one of the following: "eps|com|pld|adc"\n')
-    print ("\Read the code, it is pretty self-explanatory")
+    print ("Read the code, it is pretty self-explanatory")
     print ("Helpful tips how to use BammSat software-in-the-loop simulator:")
     print ("\t1. -p option speficies the http port that software will listen on")
     print ("\t2. If -v option is specified, the simulator will not attempt to")
