@@ -376,7 +376,7 @@ def display_help():
     print ('\tcan be one of the following: "eps|com|pld|adc"\n')
     print ("\Read the code, it is pretty self-explanatory")
     print ("Helpful tips how to use BammSat software-in-the-loop simulator:")
-    print ("\t1. -p option speficies the http port that COM subsystem will listen on")
+    print ("\t1. -p option speficies the http port that software will listen on")
     print ("\t2. If -v option is specified, the simulator will not attempt to")
     print ("\t   create an actual serial port connection, using the mock object instead")
     print ("\t3. If -c option is specified, the simulator will use Raspberry Pi 2")
