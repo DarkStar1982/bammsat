@@ -4,12 +4,35 @@ import time
 import struct
 import sys
 import getopt
+import threading
 from random import random
+from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from Adafruit_BME280 import *
 
 OPTIONS = {
-    "hardware_sensors":False
+    "hardware_sensors":False,
+    "serial_port": None,
+    "subsystem": None,
+    "http_port":8000,
 }
+
+SHARED_DATA = {
+    "run_thread":True,
+    "command_queue":[] # <-append commands from start
+}
+
+# HTTP interface
+class GETHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # dump information from the subsystem
+        data = OPTIONS["subsystem"].dump_status()
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write("<html><head><title>Title goes here.</title></head>")
+        self.wfile.write("<body><p>%s</p>" % data)
+        self.wfile.write("</body></html>")
+        self.wfile.close()
 
 class SerialPortMockup(object):
     def __init__(self):
@@ -34,6 +57,8 @@ class Subsystem(object):
     def evolve(self):
         pass
 
+    def dump_status(self):
+        return "I am fine"
 
 # simulate power subsystem
 # can be fully passive, self-managed with only health reporting
@@ -49,7 +74,6 @@ class EPS(Subsystem):
             self.sensor = BME280(t_mode=BME280_OSAMPLE_8, p_mode=BME280_OSAMPLE_8, h_mode=BME280_OSAMPLE_8)
         else:
             self.sensor = None
-
 
     def get_next_packet(self):
         # decide what packet to send
@@ -258,43 +282,7 @@ class ADC(Subsystem):
         time.sleep(self.time_delay)
         self.counter = self.counter + 1
 
-class SubsystemSimulator(object):
-    # create serial port connection, and subsystem to run
-    # note that serial port connection can be also a simulated one
-    def __init__(self, data):
-        if data["serialmode"] == "pi2compatible":
-            self.serialport = serial.Serial("/dev/ttyAMA0", 115200, timeout=0.5)
-        elif data["serialmode"] == "real":
-            self.serialport = serial.Serial("/dev/ttyS0", 115200, timeout=0.5)
-        elif data["serialmode"] == "virtual":
-            self.serialport = SerialPortMockup()
-        if data["subsystem"] == "eps":
-            self.subsystem = EPS(data)
-        if data["subsystem"] == "com":
-            self.subsystem = COM(data)
-        if data["subsystem"] == "pld":
-            self.subsystem = PLD(data)
-        if data["subsystem"] == "adc":
-            self.subsystem = ADC(data)
-
-    # get outbound data, exchange communications packets
-    # process inbound data and move forward the subsystem state
-    def simulate(self):
-        while(True):
-            p_outbound = self.subsystem.get_next_packet()
-            if p_outbound is not None:
-                self.serialport.write(p_outbound)
-            p_inbound = self.serialport.readline()
-            self.subsystem.process_inbound_packet(p_inbound)
-            self.subsystem.evolve()
-
-    def log_outbound_packet(self, packet):
-        print data
-
-    def log_inbound_packet(self, packet):
-        print data
-
-
+# should be a file read
 def load_subsystem_scenario(p_subsystem):
     if p_subsystem == "eps":
         scenario_data = {
@@ -326,23 +314,83 @@ def load_subsystem_scenario(p_subsystem):
         }
     return scenario_data
 
+def run_simulation_thread():
+    # run simulator
+    while(SHARED_DATA["run_thread"]):
+        p_outbound = OPTIONS["subsystem"].get_next_packet()
+        if p_outbound is not None:
+            OPTIONS["serial_port"].write(p_outbound)
+        p_inbound = OPTIONS["serial_port"].readline()
+        OPTIONS["subsystem"].process_inbound_packet(p_inbound)
+        OPTIONS["subsystem"].evolve()
+
+# create serial port connection, and subsystems to run
+# (note that serial port connection can be also a simulated one)
+# get outbound data, exchange communications packets
+# process inbound data and move forward the subsystem state
+def simulate(serial_mode, subsystem_mode, http_port, hardware_mode):
+    # should be a file path
+    data = load_subsystem_scenario(subsystem_mode)
+
+    # set optional hardware and http server options
+    OPTIONS["hardware_sensors"] = hardware_mode
+    OPTIONS["http_port"] = http_port
+
+    # creare serial port conection
+    if serial_mode == "pi2compatible":
+        OPTIONS["serial_port"] = serial.Serial("/dev/ttyAMA0", 115200, timeout=0.5)
+    if serial_mode == "real":
+        OPTIONS["serial_port"] = serial.Serial("/dev/ttyS0", 115200, timeout=0.5)
+    if serial_mode == "virtual":
+        OPTIONS["serial_port"] = SerialPortMockup()
+
+    # create subsystem...
+    if subsystem_mode == 'com':
+        OPTIONS["subsystem"] = COM(data)
+    if subsystem_mode == "eps":
+        OPTIONS["subsystem"] = EPS(data)
+    if subsystem_mode == "adc":
+        OPTIONS["subsystem"] = ADC(data)
+    if subsystem_mode == "pld":
+        OPTIONS["subsystem"] = PLD(data)
+
+    # ...and simulate it in a separate thread
+    t = threading.Thread(target=run_simulation_thread)
+    t.start()
+
+    # create external HTTP interface on a main thread
+    instance = ('0.0.0.0', OPTIONS["http_port"])
+    http_server = HTTPServer(instance, GETHandler)
+    try:
+        http_server.serve_forever()
+    except (KeyboardInterrupt, SystemExit):
+        SHARED_DATA["run_thread"] = False
+        print "\r\nExiting all threads, please wait..."
+        sys.exit(0)
+
+
+
 def display_help():
     print ('General usage:')
     print ('\tbammsat.py -s <subsystem>, where <subsystem>')
     print ('\tcan be one of the following: "eps|com|pld|adc"\n')
+    print ("\Read the code, it is pretty self-explanatory")
     print ("Helpful tips how to use BammSat software-in-the-loop simulator:")
-    print ("\t1. Read the code, it is pretty self-explanatory")
+    print ("\t1. -p option speficies the http port that COM subsystem will listen on")
     print ("\t2. If -v option is specified, the simulator will not attempt to")
     print ("\t   create an actual serial port connection, using the mock object instead")
     print ("\t3. If -c option is specified, the simulator will use Raspberry Pi 2")
     print ("\t   compatible serial port settings");
-    print ("\t3. If -u option is specified, the simulator will attempt to use extra")
+    print ("\t4. If -u option is specified, the simulator will attempt to use extra")
     print ("\t   hardware functionality, if available");
 
 def main(argv):
     scenario_data = None
+    serial_mode = "real"
+    http_port = 8000
+    hardware_sensors = False
     try:
-        opts, args = getopt.getopt(argv,"huvcs:",["help","use_sensors","vse","pi2","system="])
+        opts, args = getopt.getopt(argv,"huvcp:s:",["help","use_sensors","vse","pi2","port=","system="])
     except getopt.GetoptError:
         print ('bammsat.py --help')
         sys.exit(2)
@@ -352,14 +400,14 @@ def main(argv):
             sys.exit(0)
         elif opt in ('-s','--system'):
             subsystem = arg
-            scenario_data = load_subsystem_scenario(subsystem)
-        elif opt in ('-u', '--use_sensors'):
-            OPTIONS["hardware_sensors"] = True
-        elif opt in ('-v', '--vse'):
-            scenario_data["serialmode"]="virtual"
+        elif opt in ('-p', '--port'):
+            http_port = int(arg)
         elif opt in ('-c', '--pi2'):
-            scenario_data["serialmode"]="pi2compatible"
-    BAMMSatSimulator = SubsystemSimulator(scenario_data)
-    BAMMSatSimulator.simulate()
+            serial_mode="pi2compatible"
+        elif opt in ('-v', '--vse'):
+            serial_mode="virtual"
+        elif opt in ('-u', '--use_sensors'):
+            hardware_sensors = True
+    simulate(serial_mode, subsystem, http_port, hardware_sensors)
 
 main(sys.argv[1:])
